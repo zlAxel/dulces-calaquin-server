@@ -32,6 +32,17 @@ class LoginRequest extends FormRequest
         ];
     }
 
+    public function messages()
+    {
+        return [
+            'email.required' => 'El correo electrónico no puede ir vacío',
+            'email.string' => 'El correo electrónico debe ser una cadena de texto',
+            'email.email' => 'El correo electrónico debe ser una dirección de correo válida',
+            'password.required' => 'La contraseña no puede ir vacía',
+            'password.string' => 'La contraseña debe ser una cadena de texto',
+        ];
+    }
+
     /**
      * Attempt to authenticate the request's credentials.
      *
