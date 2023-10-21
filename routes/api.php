@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SearchUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,3 +18,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// ! Agregamos ruta para buscar un usuario por su email
+Route::post('/search-user', SearchUserController::class)->middleware('guest')->name('search-user');
