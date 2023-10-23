@@ -11,6 +11,14 @@ class SearchUserController extends Controller{
      * Handle the incoming request.
      */
     public function __invoke(Request $request){
+
+        $this->validate($request, [
+            'email' => 'required|email'
+        ],[
+            'email.required' => 'Por favor escriba su correo electrónico.',
+            'email.email' => 'El correo electrónico no es válido.'
+        ]);
+        
         // ? Buscamos el usuario por su email
         $user = User::where('email', $request->email)->first();
 

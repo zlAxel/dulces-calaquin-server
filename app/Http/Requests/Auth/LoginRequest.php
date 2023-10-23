@@ -2,20 +2,21 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class LoginRequest extends FormRequest
-{
+class LoginRequest extends FormRequest {
+
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
-    {
+    public function authorize(): bool {
         return true;
     }
 
@@ -24,22 +25,36 @@ class LoginRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
      */
-    public function rules(): array
-    {
-        return [
+    public function rules(): array {
+
+        $tipoLogin = $this->input('login_type');
+        $rules = [
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
         ];
+        
+        if ( $tipoLogin == 'login' ){
+            // ? Concatenamos el nuevo array con el anterior
+            $rules = array_merge($rules, [
+                'password' => ['required', 'string'],
+            ]);
+        }else
+        if ( $tipoLogin == 'login_punto' ){
+            $rules = array_merge($rules, [
+                'pin' => ['required'],
+            ]);
+        }
+
+        return $rules;
     }
 
-    public function messages()
-    {
+    public function messages() {
         return [
             'email.required' => 'El correo electrónico no puede ir vacío',
             'email.string' => 'El correo electrónico debe ser una cadena de texto',
             'email.email' => 'El correo electrónico debe ser una dirección de correo válida',
             'password.required' => 'La contraseña no puede ir vacía',
             'password.string' => 'La contraseña debe ser una cadena de texto',
+            'pin.required' => 'El pin de compras no puede ir vacío',
         ];
     }
 
@@ -58,6 +73,30 @@ class LoginRequest extends FormRequest
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Attempt to authenticate the request's credentials of the phisic store.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function authenticate_punto(): void
+    {
+
+        $this->ensureIsNotRateLimited();
+
+        if ( ! $this->customAuthentication($this->input('email'), $this->input('pin')) ) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
+        }else{
+            $user = User::where('email', $this->input('email'))->first();
+            Auth::login($user, $this->boolean('remember'));
         }
 
         RateLimiter::clear($this->throttleKey());
@@ -92,5 +131,19 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+    }
+
+    /**
+     * Create a new custom authentication request.
+     */
+    private function customAuthentication($email, $pin)
+    {
+        $user = User::where('email', $email)->first();
+        
+        if ($user && Hash::check($pin, $user->pin)) {
+            return true;
+        }
+        
+        return false;
     }
 }

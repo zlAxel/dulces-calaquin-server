@@ -16,6 +16,10 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store'])
                 ->middleware('guest')
                 ->name('login');
 
+Route::post('/login-punto', [AuthenticatedSessionController::class, 'login_punto'])
+                ->middleware('guest')
+                ->name('login_punto');
+
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
                 ->middleware('guest')
                 ->name('password.email');
