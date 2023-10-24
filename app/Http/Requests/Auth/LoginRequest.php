@@ -4,8 +4,10 @@ namespace App\Http\Requests\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -66,8 +68,12 @@ class LoginRequest extends FormRequest {
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
-
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        
+        // ? Obtenemos el password encriptado y lo desencriptamos
+        $passwordCrypt   = $this->input('password');
+        $passwordDecrypt = Crypt::decrypt($passwordCrypt, unserialize: false);
+        
+        if (! Auth::attempt(['email' => $this->input('email'), 'password' => $passwordDecrypt], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
