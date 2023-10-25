@@ -94,7 +94,11 @@ class LoginRequest extends FormRequest {
 
         $this->ensureIsNotRateLimited();
 
-        if ( ! $this->customAuthentication($this->input('email'), $this->input('pin')) ) {
+        // ? Obtenemos el pin encriptado y lo desencriptamos
+        $pinCrypt   = $this->input('pin');
+        $pinDecrypt = Crypt::decrypt($pinCrypt, unserialize: false);
+
+        if ( ! $this->customAuthentication($this->input('email'), $pinDecrypt) ) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
