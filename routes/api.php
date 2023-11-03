@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SearchUserController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,3 +29,6 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 // ! Agregamos ruta para buscar un usuario por su email
 Route::post('/search-user', SearchUserController::class)->middleware('guest')->name('search-user');
+
+// ! Agregamos la ruta para el controlador de productos
+Route::apiResource('/products', ProductController::class);
