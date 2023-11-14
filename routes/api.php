@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\SearchUserController;
+use App\Http\Controllers\Api\PurchaseController;
 
+use App\Http\Controllers\Api\SearchUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,3 +33,6 @@ Route::post('/search-user', SearchUserController::class)->middleware('guest')->n
 
 // ! Agregamos la ruta para el controlador de productos
 Route::apiResource('/products', ProductController::class);
+
+// ! Agregamos la ruta para el controlador de compras
+Route::apiResource('/purchases', PurchaseController::class);

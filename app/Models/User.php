@@ -3,6 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Models\Purchase;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -45,4 +48,12 @@ class User extends Authenticatable
         'password' => 'hashed',
         'pin' => 'hashed',
     ];
+
+    /**
+     * ? Create the instance for purchase.
+     */
+    public function purchases()
+    {
+        return $this->hasMany( Purchase::class );
+    }
 }
