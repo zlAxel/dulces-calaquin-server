@@ -36,3 +36,4 @@ Route::apiResource('/products', ProductController::class);
 
 // ! Agregamos la ruta para el controlador de compras
 Route::apiResource('/purchases', PurchaseController::class);
+Route::get('/recent-purchases', [PurchaseController::class, 'recent_purchases'])->name('recent-purchases');
