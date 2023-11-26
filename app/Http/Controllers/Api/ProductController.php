@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductCollection;
+
 use App\Models\Product;
+use App\Models\ProductPurchase;
+
+use DB;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller {
@@ -51,5 +55,26 @@ class ProductController extends Controller {
      */
     public function destroy(string $id) {
         //
+    }
+
+    /**
+     * Display a listing of the top products selled.
+     */
+    
+    public function top_products()
+    {
+        /**
+         * ? Buscamos de la tabla "products" los productos "available => 1", después vamos a la relación muchos a muchos 
+         * ? "product_purchase" y vemos cuales son los productos que más se han vendido según la columna "quantity" de la tabla
+        */
+        // $products = Product::where('available', true)->withCount('product_purchase')->orderBy('product_purchase_count', 'DESC')->take(10)->get();
+        $products = Product::where('available', true)->withCount(['product_purchase' => function ($query) {
+            $query->select(DB::raw('SUM(quantity) as total'));
+        }])->orderBy('product_purchase_count', 'DESC')->take(12)->get();
+        
+        // ? Retornamos la respuesta 200 = OK
+        return response()->json([
+            'products' => $products,
+        ], 200);
     }
 }
