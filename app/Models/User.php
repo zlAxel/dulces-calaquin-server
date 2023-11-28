@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Models\Product;
+use App\Models\ProductPurchase;
 use App\Models\Purchase;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -55,5 +57,13 @@ class User extends Authenticatable
     public function purchases()
     {
         return $this->hasMany( Purchase::class );
+    }
+
+    /**
+     * ? Create the instance for product.
+     */
+    public function products()
+    {
+        return $this->hasMany( Product::class );
     }
 }

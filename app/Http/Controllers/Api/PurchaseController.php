@@ -82,4 +82,29 @@ class PurchaseController extends Controller
     {
         //
     }
+
+    /**
+     * Display a list of recent purchases.
+     */
+
+     public function recent_purchases()
+     {
+         // ? Obtenemos solamente los últimos 10 productos de las compras del usuario autenticado y eliminamos los productos repetidos
+         $purchases = auth()->user()
+                            ->purchases()       // * Obtenemos las compras
+                            ->with('products')  // * Obtenemos la relación del modelo Purchase con el modelo Product
+                            ->latest()          // * Ordenamos de forma descendente
+                            ->take(5)           // * Tomamos los últimos 5 registros  
+                            ->get()             // * Finalmente obtenemos los registros
+                            ->pluck('products') // * Obtenemos solamente los productos de las compras
+                            ->flatten()         // * Aplanamos la colección
+                            ->unique('id')      // * Eliminamos los productos repetidos
+                            ->values()          // * Quitamos los índices que "unique" agrega
+                            ->take(10);         // * Finalmente tomamos los últimos 10 productos
+ 
+         // ? Retornamos la respuesta 200 = OK
+         return response()->json([
+             'purchases' => $purchases,
+         ], 200);
+     }
 }
