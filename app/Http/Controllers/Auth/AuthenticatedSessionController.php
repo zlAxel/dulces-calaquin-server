@@ -17,7 +17,9 @@ class AuthenticatedSessionController extends Controller {
 
         $request->session()->regenerate();
 
-        return response()->noContent();
+        $user_admin = Auth::user()->admin;
+
+        return response($user_admin, 200);
     }
     
     /**
