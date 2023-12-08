@@ -37,6 +37,8 @@ Route::post('/search-user', SearchUserController::class)->middleware('guest')->n
 // ! Agregamos la ruta para el controlador de productos
 Route::apiResource('/products', ProductController::class);
 Route::get('/top-products', [ProductController::class, 'top_products'])->name('top-products'); // * Ruta para obtener los productos más vendidos
+Route::get('/all-products', [ProductController::class, 'all_products'])->name('all-products'); // * Ruta para obtener todos los productos
+Route::post('/product-available/{id}', [ProductController::class, 'product_available'])->name('product-available'); // * Ruta para obtener los productos disponibles
 
 // ! Agregamos la ruta para el controlador de compras
 Route::apiResource('/purchases', PurchaseController::class);

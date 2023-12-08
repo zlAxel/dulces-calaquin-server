@@ -30,6 +30,14 @@ class ProductController extends Controller {
     }
 
     /**
+     * Display a listing of all the products.
+     */
+    public function all_products(){
+        // ? Devolvemos la colección de productos
+        return new ProductCollection( Product::orderBy('id', 'DESC')->get() );
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request) {
@@ -75,6 +83,32 @@ class ProductController extends Controller {
         // ? Retornamos la respuesta 200 = OK
         return response()->json([
             'products' => $products,
+        ], 200);
+    }
+
+    public function product_available(Request $request, string $id)
+    {
+        // Obtenemos el $id y el $available(0 o 1) del request
+        $available = $request->available;
+        $description = $available ? 'activado' : 'inactivado';
+        
+        // Buscamos el producto por su id
+        $product = Product::find($id);
+        
+        // Si no se encontró el producto retornamos un error 404
+        if(!$product){
+            return response()->json([
+                'message' => 'Producto no encontrado',
+            ], 404);
+        }
+        
+        // Cambiamos el estado del producto
+        $product->available = $available;
+        $product->save();
+        
+        // ? Retornamos la respuesta 200 = OK
+        return response()->json([
+            'message' => "El producto {$product->name} ha sido {$description}.",
         ], 200);
     }
 }
