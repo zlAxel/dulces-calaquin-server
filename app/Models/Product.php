@@ -13,6 +13,19 @@ class Product extends Model
     use HasFactory;
 
     /**
+     * ? The attributes that are mass assignable.
+     * @var array<string>
+     */
+
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'image',
+        'available',
+    ];
+
+    /**
      * ? Create the instance for all purchases of the product.
      */
     public function purchases()

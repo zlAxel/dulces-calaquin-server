@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductRequest;
+
 use App\Http\Resources\ProductCollection;
-
 use App\Models\Product;
-use App\Models\ProductPurchase;
 
+use App\Models\ProductPurchase;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller {
     
@@ -39,9 +41,27 @@ class ProductController extends Controller {
 
     /**
      * Store a newly created resource in storage.
+     * Elements to receive: name, description, price, available, image
      */
-    public function store(Request $request) {
-        //
+    public function store(ProductRequest $request) {
+
+        $image = $request->file('image');                           // Obtenemos el archivo de la imagen
+        $nameImage = Str::uuid().".".$image->extension();           // Generamos un nombre único para la imagen
+        $image->move(public_path('images/products'), $nameImage);   // Movemos la imagen a la carpeta "public/images/products"
+        
+        // ? Creamos el producto
+        Product::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price, 
+            'available' => $request->available, 
+            'image' => $nameImage,
+        ]);
+        
+        // ? Retornamos la respuesta 201 = CREATED
+        return response()->json([
+            'message' => 'Tu producto se ha creado correctamente.',
+        ], 201);
     }
 
     /**
@@ -74,11 +94,17 @@ class ProductController extends Controller {
         /**
          * ? Buscamos de la tabla "products" los productos "available => 1", después vamos a la relación muchos a muchos 
          * ? "product_purchase" y vemos cuales son los productos que más se han vendido según la columna "quantity" de la tabla
+         * 
+         * ? Y por último recorremos cada producto para construir la URL de la imagen
         */
-        // $products = Product::where('available', true)->withCount('product_purchase')->orderBy('product_purchase_count', 'DESC')->take(10)->get();
         $products = Product::where('available', true)->withCount(['product_purchase' => function ($query) {
             $query->select(DB::raw('SUM(quantity) as total'));
         }])->orderBy('product_purchase_count', 'DESC')->take(12)->get();
+        
+        foreach($products as $product){
+            $image = $product->image;
+            $product->image = request()->getSchemeAndHttpHost().'/images/products/'.$image;
+        }
         
         // ? Retornamos la respuesta 200 = OK
         return response()->json([
