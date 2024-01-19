@@ -68,21 +68,91 @@ class ProductController extends Controller {
      * Display the specified resource.
      */
     public function show(string $id) {
-        //
+        // ? Devolvemos la colección de productos
+        return new ProductCollection( Product::where('id', $id)->get() );
     }
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id) {
-        //
+        // ? Buscamos el producto por su id
+        $product = Product::find($id);
+
+        // ? Validamos el request
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:255',
+            'price' => 'required|numeric',
+            'available' => 'required|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+        
+        // ? Si no se encontró el producto retornamos un error 404
+        if( ! $product ){
+            return response()->json([
+                'message' => 'Producto no encontrado',
+            ], 404);
+        }
+        
+        // ? Si se encontró el producto, actualizamos sus datos
+        $product->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price, 
+            'available' => $request->available, 
+        ]);
+        
+        // ? Si se envió una imagen, actualizamos la imagen
+        if($request->file('image')){
+            // ? Eliminamos la imagen anterior
+            unlink(public_path('images/products/'.$product->image));
+            
+            // ? Obtenemos la nueva imagen
+            $image = $request->file('image');
+            
+            // ? Generamos un nombre único para la imagen
+            $nameImage = Str::uuid().".".$image->extension();
+            
+            // ? Movemos la imagen a la carpeta "public/images/products"
+            $image->move(public_path('images/products'), $nameImage);
+            
+            // ? Actualizamos la imagen del producto
+            $product->update([
+                'image' => $nameImage,
+            ]);
+        }
+        
+        // ? Retornamos la respuesta 200 = OK
+        return response()->json([
+            'message' => "El producto $product->name se ha actualizado correctamente.",
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id) {
-        //
+        // ? Buscamos el producto por su id
+        $product = Product::find($id);
+        
+        // ? Si no se encontró el producto retornamos un error 404
+        if( ! $product ){
+            return response()->json([
+                'message' => 'Producto no encontrado',
+            ], 404);
+        }
+        
+        // ? Eliminamos la imagen del producto
+        unlink(public_path('images/products/'.$product->image));
+        
+        // ? Eliminamos el producto
+        $product->delete();
+        
+        // ? Retornamos la respuesta 200 = OK
+        return response()->json([
+            'message' => "El producto $product->name se ha eliminado correctamente."
+        ], 200);
     }
 
     /**
