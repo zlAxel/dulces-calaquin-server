@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
@@ -20,11 +21,11 @@ class ProductResource extends JsonResource
          * la ruta completa del backend y concatenando la imagen
          * 
          * Ejemplo:
-         * http://localhost:8000/images/products/uuid.jpg
+         * http://localhost:8000/storage/images/products/imagen.jpg
          */
 
         $image = $this->image;
-        $dir = $request->getSchemeAndHttpHost().'/images/products/'.$image;
+        $dir = request()->getSchemeAndHttpHost().Storage::url('/images/products/' . $image);
 
         return [
             'id' => $this->id,

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductPurchase;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller {
@@ -44,10 +45,10 @@ class ProductController extends Controller {
      * Elements to receive: name, description, price, available, image
      */
     public function store(ProductRequest $request) {
+        $image      = $request->file('image');                                   // Obtenemos el archivo de la imagen
+        $nameImage  = Str::uuid() . "." . $image->getClientOriginalExtension();  // Generamos un nombre único para la imagen
+        $path       = $image->storeAs('images/products', $nameImage, 'public');  // Guardamos la imagen en el storage público
 
-        $image = $request->file('image');                           // Obtenemos el archivo de la imagen
-        $nameImage = Str::uuid().".".$image->extension();           // Generamos un nombre único para la imagen
-        $image->move(public_path('images/products'), $nameImage);   // Movemos la imagen a la carpeta "public/images/products"
         
         // ? Creamos el producto
         Product::create([
@@ -103,24 +104,13 @@ class ProductController extends Controller {
             'available' => $request->available, 
         ]);
         
-        // ? Si se envió una imagen, actualizamos la imagen
-        if($request->file('image')){
-            // ? Eliminamos la imagen anterior
-            unlink(public_path('images/products/'.$product->image));
+        if ($request->hasFile('image')) {
+            Storage::delete('public/images/products/' . $product->image);                               // * Elimina la imagen anterior
+
+            $nameImage  = Str::uuid() . "." . $request->image->getClientOriginalExtension();            // * Genera un nombre único
+            $path       = $request->file('image')->storeAs('images/products', $nameImage, 'public');    // * Guarda la nueva imagen
             
-            // ? Obtenemos la nueva imagen
-            $image = $request->file('image');
-            
-            // ? Generamos un nombre único para la imagen
-            $nameImage = Str::uuid().".".$image->extension();
-            
-            // ? Movemos la imagen a la carpeta "public/images/products"
-            $image->move(public_path('images/products'), $nameImage);
-            
-            // ? Actualizamos la imagen del producto
-            $product->update([
-                'image' => $nameImage,
-            ]);
+            $product->update(['image' => $nameImage]);                                                  // * Actualiza la imagen del producto
         }
         
         // ? Retornamos la respuesta 200 = OK
@@ -144,7 +134,7 @@ class ProductController extends Controller {
         }
         
         // ? Eliminamos la imagen del producto
-        unlink(public_path('images/products/'.$product->image));
+        Storage::delete('public/images/products/' . $product->image);  
         
         // ? Eliminamos el producto
         $product->delete();
@@ -173,7 +163,7 @@ class ProductController extends Controller {
         
         foreach($products as $product){
             $image = $product->image;
-            $product->image = request()->getSchemeAndHttpHost().'/images/products/'.$image;
+            $product->image = request()->getSchemeAndHttpHost().Storage::url('/images/products/' . $image);
         }
         
         // ? Retornamos la respuesta 200 = OK
