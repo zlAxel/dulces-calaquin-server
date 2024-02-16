@@ -21,7 +21,31 @@ class PurchaseController extends Controller
      */
     public function index()
     {
-        //
+        /**
+         * ? Obtenemos las ordenes, obtenemos la relación pivote "product_purchase", obtenemos del modelo "products" el precio y 
+         * ? los recorremos para obtener el total ($) multiplicado por la cantidad.
+         * ? Al final también obtenemos la descripción del status_purchase_id
+         *  
+        */ 
+
+        $purchases = auth()->user()
+                            ->purchases()
+                            ->with('products')
+                            ->get()
+                            ->map(function ($purchase) {
+                                $purchase->total = $purchase->products->map(function ($product) {
+                                    return $product->pivot->quantity * $product->price;
+                                })->sum();
+                                $purchase->status_purchase_desc = $purchase->statusPurchase->description;
+                                return $purchase;
+                            });
+        
+        
+
+        // ? Retornamos la respuesta 200 = OK
+        return response()->json([
+            'purchases' => $purchases,
+        ], 200);
     }
 
     /**
