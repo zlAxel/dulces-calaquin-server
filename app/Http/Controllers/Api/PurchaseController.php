@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class PurchaseController extends Controller
 {
@@ -24,8 +26,7 @@ class PurchaseController extends Controller
         /**
          * ? Obtenemos las ordenes, obtenemos la relación pivote "product_purchase", obtenemos del modelo "products" el precio y 
          * ? los recorremos para obtener el total ($) multiplicado por la cantidad.
-         * ? Al final también obtenemos la descripción del status_purchase_id
-         *  
+         * ? Al final también obtenemos la descripción del status_purchase_id y lo convertimos a array []
         */ 
 
         $purchases = auth()->user()
@@ -37,10 +38,15 @@ class PurchaseController extends Controller
                                     return $product->pivot->quantity * $product->price;
                                 })->sum();
                                 $purchase->status_purchase_desc = $purchase->statusPurchase->description;
+
+                                // Iterar sobre los productos y construir la ruta de la imagen
+                                $purchase->products->each(function ($product) {
+                                    $product->image = request()->getSchemeAndHttpHost().Storage::url('/images/products/' . $product->image);
+                                });
+
                                 return $purchase;
-                            });
-        
-        
+                            })->sortByDesc('created_at')
+                            ->values();
 
         // ? Retornamos la respuesta 200 = OK
         return response()->json([
@@ -123,6 +129,10 @@ class PurchaseController extends Controller
                             ->pluck('products') // * Obtenemos solamente los productos de las compras
                             ->flatten()         // * Aplanamos la colección
                             ->unique('id')      // * Eliminamos los productos repetidos
+                            ->map(function ($product) {
+                                $product->image = request()->getSchemeAndHttpHost().Storage::url('/images/products/' . $product->image);
+                                return $product;
+                            })
                             ->values()          // * Quitamos los índices que "unique" agrega
                             ->take(10);         // * Finalmente tomamos los últimos 10 productos
  
