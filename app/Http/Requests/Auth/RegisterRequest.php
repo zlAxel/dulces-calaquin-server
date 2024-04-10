@@ -25,7 +25,8 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // 'username' => 'required|unique:users|min:3|max:20',
+            // 'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
         ];
     }
@@ -71,6 +72,14 @@ class RegisterRequest extends FormRequest
             if ( strlen($pin_decrypt) != 4 ){
                 $validator->errors()->add('pin', 'El pin de compras debe tener 4 dígitos. ');
             }
+            // ? Validamos el nombre de usuario
+            $name = $this->input('name');
+            if ( $name == "" ){ $validator->errors()->add('name', 'Tu nombre no puede ir vacío. '); }
+            if ( ! is_string($name) ){ $validator->errors()->add('name', 'Tu nombre debe ser una cadena de texto. '); }
+            if ( strlen($name) < 5 ){ $validator->errors()->add('name', 'Tu nombre debe tener mínimo 5 caracteres. '); }
+            if ( strlen($name) > 20 ){ $validator->errors()->add('name', 'Tu nombre debe tener máximo 20 caracteres. '); }
+            if ( preg_match('/[\'^£$%&*()!"¡\/}{@#~?><>,|=_+¬-]/', $name) ){ $validator->errors()->add('name', 'Tu nombre no puede tener caracteres especiales. '); }
+            if ( preg_match('/\s/', $name) ){ $validator->errors()->add('name', 'Tu nombre no puede tener espacios. '); }
         });
     }
 

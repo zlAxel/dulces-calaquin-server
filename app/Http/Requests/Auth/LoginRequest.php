@@ -30,17 +30,20 @@ class LoginRequest extends FormRequest {
     public function rules(): array {
 
         $tipoLogin = $this->input('login_type');
-        $rules = [
-            'email' => ['required', 'string', 'email'],
-        ];
         
         if ( $tipoLogin == 'login' ){
+            $rules = [
+                'email' => ['required', 'string', 'email'],
+            ];
             // ? Concatenamos el nuevo array con el anterior
             $rules = array_merge($rules, [
                 'password' => ['required', 'string'],
             ]);
         }else
         if ( $tipoLogin == 'login_punto' ){
+            $rules = [
+                'email' => ['required', 'string'],
+            ];
             $rules = array_merge($rules, [
                 'pin' => ['required'],
             ]);
@@ -85,34 +88,6 @@ class LoginRequest extends FormRequest {
     }
 
     /**
-     * Attempt to authenticate the request's credentials of the phisic store.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function authenticate_punto(): void
-    {
-
-        $this->ensureIsNotRateLimited();
-
-        // ? Obtenemos el pin encriptado y lo desencriptamos
-        $pinCrypt   = $this->input('pin');
-        $pinDecrypt = Crypt::decrypt($pinCrypt, unserialize: false);
-
-        if ( ! $this->customAuthentication($this->input('email'), $pinDecrypt) ) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }else{
-            $user = User::where('email', $this->input('email'))->first();
-            Auth::login($user, $this->boolean('remember'));
-        }
-
-        RateLimiter::clear($this->throttleKey());
-    }
-
-    /**
      * Ensure the login request is not rate limited.
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -144,11 +119,70 @@ class LoginRequest extends FormRequest {
     }
 
     /**
+     * Attempt to authenticate the request's credentials of the phisic store.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function authenticate_punto(): void
+    {
+
+        $this->ensureIsNotRateLimitedUser();
+
+        // ? Obtenemos el pin encriptado y lo desencriptamos
+        $pinCrypt   = $this->input('pin');
+        $pinDecrypt = Crypt::decrypt($pinCrypt, unserialize: false);
+
+        if ( ! $this->customAuthentication($this->input('email'), $pinDecrypt) ) {
+            RateLimiter::hit($this->throttleKeyUser());
+
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
+        }else{
+            $user = User::where('name', $this->input('email'))->first();
+            Auth::login($user, $this->boolean('remember'));
+        }
+
+        RateLimiter::clear($this->throttleKeyUser());
+    }
+
+    /**
+     * Ensure the login request is not rate limited.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function ensureIsNotRateLimitedUser(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKeyUser(), 5)) {
+            return;
+        }
+
+        event(new Lockout($this));
+
+        $seconds = RateLimiter::availableIn($this->throttleKeyUser());
+
+        throw ValidationException::withMessages([
+            'email' => trans('auth.throttle', [
+                'seconds' => $seconds,
+                'minutes' => ceil($seconds / 60),
+            ]),
+        ]);
+    }
+
+    /**
+     * Get the rate limiting throttle key for the request.
+     */
+    public function throttleKeyUser(): string
+    {
+        return Str::transliterate(Str::lower($this->input('name')).'|'.$this->ip());
+    }
+
+    /**
      * Create a new custom authentication request.
      */
-    private function customAuthentication($email, $pin)
+    private function customAuthentication($name, $pin)
     {
-        $user = User::where('email', $email)->first();
+        $user = User::where('name', $name)->first();
         
         if ($user && Hash::check($pin, $user->pin)) {
             return true;
