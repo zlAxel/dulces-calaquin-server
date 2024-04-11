@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -38,6 +39,19 @@ class UserController extends Controller
 
         return [
             'user' => $user,
+        ];
+    }
+
+    /**
+     * Display all the users.
+     */
+
+    public function all_users()
+    {
+        $users = User::all();
+
+        return [
+            'users' => $users,
         ];
     }
     

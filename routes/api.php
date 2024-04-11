@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 // });
 Route::apiResource('/users', UserController::class);
 Route::get('/user-admin', [UserController::class, 'user_admin'])->name('user-admin'); // * Ruta para obtener el usuario administrador
+Route::get('/all-users', [UserController::class, 'all_users'])->name('all-users'); // * Ruta para obtener todos los usuarios
 
 // ! Agregamos ruta para buscar un usuario por su email
 Route::post('/search-user', SearchUserController::class)->middleware('guest')->name('search-user');
