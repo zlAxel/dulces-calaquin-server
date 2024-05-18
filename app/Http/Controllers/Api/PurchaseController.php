@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -69,9 +70,17 @@ class PurchaseController extends Controller
                 $status_purchase_id = 2;
                 break;
         }
-        
+
+        /**
+         * Recibimos $request->userPurchase y obtenemos el objeto del usuario del ID que se está recibiendo.
+         * 
+         * En caso que $request->userPurchase sea null, entonces se asigna el usuario autenticado.
+         */
+
+        $user = $request->userPurchase ? User::find($request->userPurchase) : $request->user();
+
         // ? Creamos la compra
-        $purchase = $request->user()->purchases()->create([
+        $purchase = $user->purchases()->create([
             'status_purchase_id' => $status_purchase_id,
         ]);
 
@@ -81,11 +90,12 @@ class PurchaseController extends Controller
             $purchase->products()->attach($product['id'], [
                 'quantity' => $product['amount'],
             ]);
-        }
+        } 
 
         // ? Retornamos la respuesta 201 = Created
         return response()->json([
             'message' => 'Compra creada correctamente',
+            'request' => $request->all(),
         ], 201);
     }
 
