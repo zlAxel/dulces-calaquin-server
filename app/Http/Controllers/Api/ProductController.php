@@ -21,11 +21,14 @@ class ProductController extends Controller {
      */
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        // $this->middleware('auth:sanctum');
+
+        // Habilitamos el middleware de autenticación excepto para los métodos index y top_products
+        $this->middleware('auth:sanctum')->except(['index', 'top_products']);
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the products available.
      */
     public function index() {
         // ? Devolvemos la colección de productos
